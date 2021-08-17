@@ -1,36 +1,23 @@
 <template>
-	<!-- :style="{ position: 'absolute', left: `${clientX}px`, top: `${clientY}px` }" -->
-	<div class="tree-container">
-		<el-input
-			placeholder="输入关键字进行过滤"
-			v-model="filterText">
-		</el-input>
-		<!-- 点击node节点,才加载子节点的时候，需设置 :lazy="true" -->
+	<div>
+		<n-input v-model:value="filterText" placeholder="搜索" />
 
-		<el-tree
-			class="_tree"
-			:data="data"
-			:props="defaultProps"
-			@node-expand="handleNodeExpand"
-			@node-click="handleNodeClick"
-			@node-contextmenu="handleRightClick"
-			:default-expanded-keys="expandedKeys"
-			:filter-node-method="filterNode"
-			:node-key="nodeKey"
-			:highlight-current="true"
+		<n-tree
 			ref="comnTree"
-			:style="`max-height:${treeHeight}px;max-width:${treeWidth}px;overflow-x:auto;}`"
+			:data="data"
+			block-node
+			@update:expanded-keys="handleNodeExpand"
+			@update:selected-keys="handleNodeClick"
+			@node-contextmenu="handleRightClick"
+			draggable
+			:default-expanded-keys="expandedKeys"
+			:render-label="renderLabel"
+			:pattern="filterText"
+			:filter="filterNode"
+			:key="nodeKey"
 		>
-			<template v-slot="{ node, data }">
-				<span>
-					<i :class="data.icon ? data.icon : 'el-icon-folder-opened'"></i>
-					<span class="tree_label">{{ node.label }}</span>
-					<span class="tree_label" v-if="data.total || data.total === 0" title="数量"
-						>({{ data.total }})</span
-					>
-				</span>
-			</template>
-		</el-tree>
+		</n-tree>
+
 		<!-- 右键菜单 -->
 		<n-popover
 			id="contextMenu"
@@ -57,8 +44,8 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, defineComponent, onMounted, watch } from 'vue';
-import { getViewHeight, createData } from '@/utils/tools';
+import { h, ref, computed, defineComponent, onMounted, watch } from 'vue';
+import { getViewHeight } from '@/utils/tools';
 
 export default defineComponent({
 	name: 'GoTree',
@@ -130,8 +117,9 @@ export default defineComponent({
 		}
 	},
 	emits: ['updateTreeMenu', 'handleNodeClick', 'handleRightClick', 'handleNodeExpand', 'handleClickTreeMenu'],
-	setup: (props, { emit }) => {
+	setup: (props, { emit }: any) => {
 		const comnTree = ref();
+		const data = ref(props.treeList);
 		let clientX = ref(0);
 		let clientY = ref(0);
 		const filterText = ref('');
@@ -155,13 +143,13 @@ export default defineComponent({
 				}
 			});
 		});
-		watch(filterText, (val) => {
-			console.log(val);
-			console.log(comnTree.value);
-			comnTree.value?.filter?.(val);
-		}, {
-			immediate: true
-		})
+		// watch(filterText, (val) => {
+		// 	console.log(val);
+		// 	console.log(comnTree.value);
+		// 	comnTree.value?.filter?.(val);
+		// }, {
+		// 	immediate: true
+		// })
 
 		function handleNodeClick (data: any) {
 			emit('updateTreeMenu', false); // 点击树节点的时候，将右键菜单隐藏。
@@ -171,8 +159,8 @@ export default defineComponent({
 		function handleRightClick (
 			event: { offsetX: number; clientY: number },
 			obj: { [x: string]: String },
-			node: any,
-			self: any
+			node?: any,
+			self?: any
 		) {
 			//  确定 右键菜单出现的位置
 			clientX.value = event.offsetX + 150;
@@ -192,15 +180,35 @@ export default defineComponent({
 
 		// 选中树节点的方法，修改的时候，id未变，子组件监听不到父组件传入的id变化时，可采取父组件主动获取子组件的该方法来实现修改后主动选择该树节点。
 		function setCurrTreeNode (id: String) {
+			console.log(comnTree.value);
 			comnTree.value?.setCurrentKey?.(id);
 		}
 
-		function filterNode (value: any, data: { [x: string]: string | any[]; }) {
+		// function filterNode (value: any, data: { [x: string]: string | any[]; }) {
+		// 	if (!value) return true;
+		// 	console.log(data);
+		// 	return data[props.defaultProps.label]?.indexOf(value) !== -1;
+		// }
+		
+		function filterNode (value: String, data: { value: { [x: string]: String[]; }; }) {
 			if (!value) return true;
 			console.log(data);
-			return data[props.defaultProps.label]?.indexOf(value) !== -1;
+			return data.value?.[props.defaultProps.label]?.indexOf(value) !== -1;
 		}
 
+		function renderLabel ({ option, checked, selected }) {
+			console.log({ option, checked, selected });
+			return h(
+				'n-button',
+				{
+					text: true, type: 'primary',
+					onmouseup: (event: any) => {
+						event?.button === 2 && handleRightClick(event, option);
+					}
+				},
+				{ default: () => option.label }
+			)
+		}
 		return {
 			comnTree,
 			clientX,
@@ -214,74 +222,14 @@ export default defineComponent({
 			handleNodeExpand,
 			setCurrTreeNode,
 			filterNode,
-			data: createData(),
-			defaultExpandedKeys: ref(['40', '41'])
+			data,
+			defaultExpandedKeys: ref(['40', '41']),
+			renderLabel
 		};
 	}
 });
 </script>
 
 <style lang="scss">
-.tree-container {
-	position: relative;
-
-	._tree {
-		color: #444;
-		padding-left: 6px;
-		overflow: auto;
-		//更改tree的默认图标颜色，图标是否为叶子节点都会出现
-		// span {
-		//   color: $icon_color;
-		// }
-		// .is-leaf {
-		//   color: transparent;
-		// }
-		.tree_label {
-			font-size: 14px;
-			letter-spacing: 1px;
-			margin-left: 5px;
-		}
-	}
-
-	.el-popover {
-		padding: 2px;
-		min-width: 20px;
-		border: 1px solid #ebeef5;
-		border-radius: 0;
-		box-shadow: 4px 4px 4px -4px rgb(121, 118, 118);
-	}
-	//重写tree的 active样式
-	.el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
-		background: #648fdb;
-		color: #fff;
-	}
-	//重写tree样式，才可使横向 超出显示滚动条
-	.el-tree > .el-tree-node {
-		min-width: 100%;
-		display: inline-block;
-	}
-}
-.popover-intree {
-	// position: absolute;
-	ul {
-		padding: 3px;
-	}
-	li {
-		list-style: none;
-	}
-}
-.context-menu {
-	letter-spacing: 1px;
-	color: #222;
-	cursor: pointer;
-	height: 30px;
-	line-height: 30px;
-	color: #000;
-	text-align: center;
-	&:hover {
-		border-radius: 2px;
-		background: #648fdb;
-		color: #fff;
-	}
-}
 </style>
+

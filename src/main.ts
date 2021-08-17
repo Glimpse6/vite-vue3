@@ -1,15 +1,11 @@
 import { createApp } from 'vue';
-import App from './App.vue';
+import App from '@/App.vue';
 
-import router from './router/index';
-import store from './store/index';
+import router from '@/router';
+import store from '@/store';
 import ElementPlus from 'element-plus';
 import 'element-plus/lib/theme-chalk/index.css';
-import { create, NPopover } from 'naive-ui';
-
-const naive = create({
-	components: [NPopover]
-});
+import naive from '@/utils/naive.config';
 
 const app = createApp(App);
 app.use(router).use(store).use(ElementPlus).use(naive).mount('#app');
