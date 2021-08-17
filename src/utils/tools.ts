@@ -16,13 +16,14 @@ export function getViewHeight() {
 }
 
 export function createData (level = 4, baseKey = ''): {} {
-	if (!level) return {};
+	if (!level) return [];
 	return Array.apply(null, { length: 6 - level }).map((_, index) => {
 		const key = '' + baseKey + level + index;
 		return {
 			mName: createLabel(level),
 			key,
-			subs: createData(level - 1, key)
+			subs: createData(level - 1, key),
+			active: false
 		};
 	});
 }

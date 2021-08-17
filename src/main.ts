@@ -5,10 +5,10 @@ import router from './router/index';
 import store from './store/index';
 import ElementPlus from 'element-plus';
 import 'element-plus/lib/theme-chalk/index.css';
-import { create, NPopover } from 'naive-ui';
+import { create, NPopover, NText, NButton, NIcon, NInput } from 'naive-ui';
 
 const naive = create({
-	components: [NPopover]
+	components: [NPopover, NText, NButton, NIcon, NInput]
 });
 
 const app = createApp(App);

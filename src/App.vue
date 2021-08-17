@@ -76,5 +76,6 @@ export default defineComponent({
 @import url(./style/index.scss);
 .go-tree-flex {
 	margin: 100px;
+	height: v-bind();
 }
 </style>
